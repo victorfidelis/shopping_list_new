@@ -9,10 +9,15 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('accountpage');
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Conta'),
+          title: const Row(
+            children: [
+              Icon(Icons.person, size: 30,),
+              SizedBox(width: 8),
+              Text('Conta'),
+            ],
+          ),
           backgroundColor: primaryBackground,
           titleTextStyle: appBarTextStyle,
         ),
@@ -28,7 +33,7 @@ class AccountPage extends StatelessWidget {
             const SizedBox(height: 8),
             ListTile(
               selectedTileColor: secondaryBackground,
-              leading: Icon(Icons.output),
+              leading: const Icon(Icons.output),
               title: const Text('Sair'),
               onTap: () => logout(),
             ),

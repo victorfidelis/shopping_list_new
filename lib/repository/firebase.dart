@@ -10,15 +10,25 @@ Future<Map> loginShoppingList(String emailAddress, String password) async {
     'user': null,
     'message': '',
     'authenticated': false,
-    'errorField': ''
+    'errorField': '',
+    'emailVerify': false,
   };
 
   try {
     await FirebaseAuth.instance
         .signInWithEmailAndPassword(email: emailAddress, password: password);
-    mapReturn['user'] = FirebaseAuth.instance.currentUser;
-    mapReturn['message'] = 'Usuário logado com sucesso';
-    mapReturn['authenticated'] = true;
+
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (!(currentUser?.emailVerified ?? true)) {
+      mapReturn['user'] = currentUser;
+      mapReturn['message'] = 'Usuário não possui e-mail verificado';
+      mapReturn['errorField'] = 'Verificação de e-mail';
+      mapReturn['emailVerify'] = true;
+    } else {
+      mapReturn['user'] = currentUser;
+      mapReturn['message'] = 'Usuário logado com sucesso';
+      mapReturn['authenticated'] = true;
+    }
   } on FirebaseAuthException catch (e) {
     if (e.code == 'user-not-found') {
       mapReturn['message'] = 'Usuário não encontrado';
@@ -41,12 +51,13 @@ Future<Map> registerShoppingList(String emailAddress, String password) async {
   };
 
   try {
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: emailAddress,
       password: password,
     );
     mapReturn['user'] = FirebaseAuth.instance.currentUser;
     mapReturn['authenticated'] = true;
+    await userCredential.user?.sendEmailVerification();
   } on FirebaseAuthException catch (e) {
     if (e.code == 'weak-password') {
       mapReturn['message'] = 'A senha é muito fraca';
@@ -58,6 +69,7 @@ Future<Map> registerShoppingList(String emailAddress, String password) async {
   } catch (e) {
     mapReturn['message'] = 'Erro desconhecido. Tente novamente';
   }
+  FirebaseAuth.instance.signOut();
 
   return mapReturn;
 }

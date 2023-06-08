@@ -27,8 +27,8 @@ class _AppPageState extends State<AppPage> {
       FirebaseAuth.instance
         .authStateChanges()
         .listen((User? currentUser) {
-          print(currentUser);
           user = currentUser;
+          if (!(user?.emailVerified ?? true)) user = null;
         });
       setState(() {
         loading = false;

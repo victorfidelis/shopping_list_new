@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shopping_list_new/models/shopping_list.dart';
 import 'package:shopping_list_new/general/styles.dart';
-import 'package:date_field/date_field.dart';
+import 'package:intl/intl.dart';
 import 'package:shopping_list_new/models/store.dart';
 import 'package:shopping_list_new/repository/firebase.dart';
 
@@ -21,7 +21,8 @@ class CreateListPage extends StatefulWidget {
 class _CreateListPageState extends State<CreateListPage> {
   Store? storeList;
   TextEditingController storeController = TextEditingController();
-  DateTime? fieldDtShopping;
+  TextEditingController dtShoppingController = TextEditingController();
+  DateTime fieldDtShopping = DateTime.now();
   String? errorTextName;
   bool newList = true;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
@@ -31,6 +32,10 @@ class _CreateListPageState extends State<CreateListPage> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.shoppingList?.dtShopping != null){
+      fieldDtShopping = widget.shoppingList!.dtShopping!;
+    }
 
     if (widget.shoppingList != null) {
       setState(() {
@@ -44,6 +49,8 @@ class _CreateListPageState extends State<CreateListPage> {
         );
       });
     }
+
+    dtShoppingController.text = DateFormat('dd/MM/yyyy').format(fieldDtShopping);
   }
 
   @override
@@ -58,7 +65,7 @@ class _CreateListPageState extends State<CreateListPage> {
         titleTextStyle: appBarTextStyle,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: saveList,
+        onPressed: addList,
         backgroundColor: primaryBackground,
         child: const Icon(
           Icons.save,
@@ -91,18 +98,27 @@ class _CreateListPageState extends State<CreateListPage> {
                       },
                     ),
                     searchStore(),
-                    DateTimeFormField(
+                    TextField(
+                      readOnly: true,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         suffixIcon: Icon(Icons.event_note),
                         labelText: 'Data da compra',
                       ),
-                      mode: DateTimeFieldPickerMode.date,
-                      autovalidateMode: AutovalidateMode.always,
-                      onDateSelected: (DateTime value) {
-                        fieldDtShopping = value;
+                      controller: dtShoppingController,
+                      onTap: () {
+                        showDatePicker(
+                          context: context,
+                          initialDate: fieldDtShopping,
+                          firstDate: DateTime(2018, 1, 1),
+                          lastDate: DateTime(2050, 12, 31),
+                        ).then((value) {
+                          if (value != null) {
+                            fieldDtShopping = value;
+                            dtShoppingController.text = DateFormat('dd/MM/yyyy').format(value);
+                          }
+                        });
                       },
-                      initialValue: widget.shoppingList?.dtShopping,
                     ),
                   ],
                 ),
@@ -111,7 +127,7 @@ class _CreateListPageState extends State<CreateListPage> {
     );
   }
 
-  void saveList() {
+  void addList() {
     String storeText = storeController.text;
 
     if (storeText.isEmpty) {
@@ -154,6 +170,7 @@ class _CreateListPageState extends State<CreateListPage> {
                       });
                       if (value != null) {
                         storeList!.id = value;
+                        saveList();
                       } else {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(snackBarError);
@@ -179,80 +196,84 @@ class _CreateListPageState extends State<CreateListPage> {
             );
           });
     } else {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Salvar lista?'),
-            content: Text(
-                'Tem certeza que deseja salvar a lista da loja "${storeController.text}"?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  SnackBar snackBarError = const SnackBar(
-                    content: Text('Ocorreu um erro ao gravar o produto'),
-                    duration: Duration(seconds: 2),
+      saveList();
+    }
+  }
+
+  void saveList() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Salvar lista?'),
+          content: Text(
+              'Tem certeza que deseja salvar a lista da loja "${storeController.text}"?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                SnackBar snackBarError = const SnackBar(
+                  content: Text('Ocorreu um erro ao gravar o produto'),
+                  duration: Duration(seconds: 2),
+                );
+
+                if (newList) {
+                  widget.shoppingList = ShoppingList(
+                    dtCreate: DateTime.now(),
+                    dtShopping: fieldDtShopping,
+                    store: storeList!.name,
+                    storeId: storeList!.id!,
+                    userId: widget.user.uid,
                   );
 
-                  if (newList) {
-                    widget.shoppingList = ShoppingList(
-                      dtCreate: DateTime.now(),
-                      dtShopping: fieldDtShopping,
-                      store: storeList!.name,
-                      storeId: storeList!.id!,
-                      userId: widget.user.uid,
-                    );
+                  setState(() {
+                    loading = true;
+                  });
+                  createList(widget.shoppingList!).then((value) {
+                    if (value!= null) {
+                      widget.shoppingList!.id = value;
+                      Navigator.pop(scaffoldKey.currentContext!, widget.shoppingList);
+                    } else {
+                      setState(() {
+                        loading = false;
+                      });
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(snackBarError);
+                    }
+                  });
+                } else {
+                  widget.shoppingList!.store = storeList!.name;
+                  widget.shoppingList!.storeId = storeList!.id!;
+                  widget.shoppingList!.dtShopping = fieldDtShopping;
 
-                    setState(() {
-                      loading = true;
-                    });
-                    createList(widget.shoppingList!).then((value) {
-                      if (value!= null) {
-                        widget.shoppingList!.id = value;
-                        Navigator.pop(scaffoldKey.currentContext!, widget.shoppingList);
-                      } else {
-                        setState(() {
-                          loading = false;
-                        });
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(snackBarError);
-                      }
-                    });
-                  } else {
-                    widget.shoppingList!.store = storeList!.name;
-                    widget.shoppingList!.storeId = storeList!.id!;
-                    widget.shoppingList!.dtShopping = fieldDtShopping;
-
-                    setState(() {
-                      loading = true;
-                    });
-                    updateList(widget.shoppingList!).then((value) {
-                      if (value) {
-                        Navigator.pop(scaffoldKey.currentContext!, widget.shoppingList);
-                      } else {
-                        setState(() {
-                          loading = false;
-                        });
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(snackBarError);
-                      }
-                    });
-                  }
-                },
-                child: const Text('Sim', style: TextStyle(color: Colors.green)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Não', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          );
-        },
-      );
-    }
+                  setState(() {
+                    loading = true;
+                  });
+                  updateList(widget.shoppingList!).then((value) {
+                    if (value) {
+                      Navigator.pop(scaffoldKey.currentContext!, widget.shoppingList);
+                    } else {
+                      setState(() {
+                        loading = false;
+                      });
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(snackBarError);
+                    }
+                  });
+                }
+              },
+              child: const Text('Sim', style: TextStyle(color: Colors.green)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Não', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget searchStore() {

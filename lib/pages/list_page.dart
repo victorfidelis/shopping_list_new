@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:shopping_list_new/repository/firebase.dart';
 import 'package:shopping_list_new/models/shopping_list.dart';
 import 'package:shopping_list_new/general/styles.dart';
@@ -41,6 +42,7 @@ class _ListPage extends State<ListPage>
         listList = firebaseLists.docs
             .map((e) => ShoppingList.fromDocument(e))
             .toList();
+        setOrderList(OrderList.dateShopping);
       });
     } catch (e) {
       setState(() {
@@ -59,11 +61,16 @@ class _ListPage extends State<ListPage>
 
   @override
   Widget build(BuildContext context) {
-    print('listpage');
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Listas'),
+        title: const Row(
+          children: [
+            Icon(Icons.list_outlined, size: 30,),
+            SizedBox(width: 8),
+            Text('Listas'),
+          ],
+        ),
         backgroundColor: primaryBackground,
         titleTextStyle: appBarTextStyle,
         actions: [
@@ -122,83 +129,111 @@ class _ListPage extends State<ListPage>
           size: 32,
         ),
       ),
-      body: loadingError
-          ? const Center(child: Text('Ocorreu um erro ao carregar as listas.'))
-          : loading
-              ? loadingAnimationPage
-              : Container(
-                  margin: const EdgeInsets.all(4),
-                  child: RefreshIndicator(
-                    onRefresh: refreshList,
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                      ),
-                      itemCount: listList.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            onSelectedList(listList[index], index);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: secondaryBackground,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: background,
+        ),
+        child: loadingError
+            ? const Center(child: Text('Ocorreu um erro ao carregar as listas.'))
+            : loading
+                ? loadingAnimationPage
+                : Container(
+                    margin: const EdgeInsets.all(4),
+                    child: RefreshIndicator(
+                      onRefresh: refreshList,
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                        ),
+                        itemCount: listList.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onLongPress: () {
+                              onSelectedList(listList[index], index);
+                            },
+                            onTap: () {
+                              openList(listList[index], index);
+                            },
                             child: Container(
-                              padding: const EdgeInsets.all(6),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      listList[index].store,
-                                      textAlign: TextAlign.center,
+                              padding: const EdgeInsets.all(4),
+                              margin: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: secondaryBackground,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        listList[index].store,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: secondaryElement,
+                                          fontSize: fontSizeCards,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      'R\$ ${formatterMoney.format(listList[index].total ?? 0.00)}',
                                       style: const TextStyle(
                                         color: secondaryElement,
-                                        fontSize: fontSizeCards,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    'R\$ ${formatterMoney.format(listList[index].total ?? 0.00)}',
-                                    style: const TextStyle(
-                                      color: secondaryElement,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  listList[index].dtShopping == null
-                                      ? const Text(
-                                          'Sem data',
-                                          style: TextStyle(
-                                            color: secondaryElement,
-                                            fontSize: 12,
+                                    const SizedBox(height: 2),
+                                    listList[index].dtShopping == null
+                                        ? const Text(
+                                            'Sem data',
+                                            style: TextStyle(
+                                              color: secondaryElement,
+                                              fontSize: 12,
+                                            ),
+                                          )
+                                        : Text(
+                                            DateFormat('dd/MM/yyyy').format(
+                                              listList[index].dtShopping!,
+                                            ),
+                                            style: const TextStyle(
+                                              color: secondaryElement,
+                                              fontSize: 12,
+                                            ),
                                           ),
-                                        )
-                                      : Text(
-                                          DateFormat('dd/MM/yyyy').format(
-                                            listList[index].dtShopping!,
-                                          ),
-                                          style: const TextStyle(
-                                            color: secondaryElement,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
+      ),
     );
+  }
+
+  void openList(ShoppingList shoppingList, int index) {
+    Navigator.push(context,
+        PageTransition(
+          child: ListProductPage(
+            shoppingList: shoppingList,
+            user: widget.user,
+          ),
+          type: PageTransitionType.fade,
+          duration: const Duration(milliseconds: 500),
+          reverseDuration: const Duration(milliseconds: 500),
+        ),
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          listList[index] = value;
+        });
+      }
+    });
   }
 
   void onSelectedList(ShoppingList shoppingList, int index) {
@@ -213,48 +248,16 @@ class _ListPage extends State<ListPage>
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                      return ListProductPage(
-                        shoppingList: shoppingList,
-                        user: widget.user,
-                      );
-                    })).then((value) {
-                      if (value != null) {
-                        setState(() {
-                          listList[index] = value;
-                        });
-                      }
-                    });
-                  },
-                  style: const ButtonStyle(
-                      backgroundColor:
-                          MaterialStatePropertyAll(primaryBackground)),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Acessar itens', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 16),
-                        Icon(Icons.task),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return CreateListPage(
+                      PageTransition(
+                        type: PageTransitionType.fade,
+                        duration: const Duration(milliseconds: 400),
+                        reverseDuration: const Duration(milliseconds: 400),
+                        child: CreateListPage(
                             user: widget.user,
                             shoppingList: shoppingList,
-                          );
-                        },
+                          ),
                       ),
                     ).then((value) {
                       if (value != null) {
@@ -356,11 +359,11 @@ class _ListPage extends State<ListPage>
       });
     } else if (orderList == OrderList.orderAz) {
       setState(() {
-        listList.sort((a, b) => a.store.compareTo(b.store));
+        listList.sort((a, b) => a.store.toUpperCase().compareTo(b.store.toUpperCase()));
       });
     } else if (orderList == OrderList.orderZa) {
       setState(() {
-        listList.sort((a, b) => b.store.compareTo(a.store));
+        listList.sort((a, b) => b.store.toUpperCase().compareTo(a.store.toUpperCase()));
       });
     } else {
       setState(() {

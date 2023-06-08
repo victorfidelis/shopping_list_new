@@ -93,20 +93,25 @@ class _UpdateListProductPageState extends State<UpdateListProductPage> {
                     children: [
                       Expanded(
                         flex: 4,
-                        child: TextField(
-                          controller: quantityController,
-                          decoration: const InputDecoration(
-                            labelText: 'Qtde',
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              signed: false, decimal: true),
-                          onChanged: (text) {
-                            calculatePrice(ValidControll.quantity);
+                        child: FocusScope(
+                          onFocusChange: (value) {
+                            if (value) selectedField(quantityController);
                           },
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(10)
-                          ],
+                          child: TextField(
+                            controller: quantityController,
+                            decoration: const InputDecoration(
+                              labelText: 'Qtde',
+                              labelStyle: TextStyle(color: Colors.grey),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                signed: false, decimal: true),
+                            onChanged: (text) {
+                              calculatePrice(ValidControll.quantity);
+                            },
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(10)
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 18),
@@ -114,22 +119,27 @@ class _UpdateListProductPageState extends State<UpdateListProductPage> {
                       const SizedBox(width: 18),
                       Expanded(
                         flex: 5,
-                        child: TextField(
-                          controller: valueController,
-                          decoration: const InputDecoration(
-                            labelText: 'Valor',
-                            labelStyle: TextStyle(color: Colors.grey),
-                            prefixText: 'R\$ ',
-                            prefixStyle: TextStyle(color: Colors.grey),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              signed: false, decimal: true),
-                          onChanged: (text) {
-                            calculatePrice(ValidControll.value);
+                        child: FocusScope(
+                          onFocusChange: (value) {
+                            if (value) selectedField(valueController);
                           },
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(9)
-                          ],
+                          child: TextField(
+                            controller: valueController,
+                            decoration: const InputDecoration(
+                              labelText: 'Valor',
+                              labelStyle: TextStyle(color: Colors.grey),
+                              prefixText: 'R\$ ',
+                              prefixStyle: TextStyle(color: Colors.grey),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                signed: false, decimal: true),
+                            onChanged: (text) {
+                              calculatePrice(ValidControll.value);
+                            },
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(9)
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 18),
@@ -137,22 +147,27 @@ class _UpdateListProductPageState extends State<UpdateListProductPage> {
                       const SizedBox(width: 18),
                       Expanded(
                         flex: 5,
-                        child: TextField(
-                          controller: totalController,
-                          decoration: const InputDecoration(
-                            labelText: 'Total',
-                            labelStyle: TextStyle(color: Colors.grey),
-                            prefixText: 'R\$ ',
-                            prefixStyle: TextStyle(color: Colors.grey),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              signed: false, decimal: true),
-                          onChanged: (text) {
-                            calculatePrice(ValidControll.total);
+                        child: FocusScope(
+                          onFocusChange: (value) {
+                            if (value) selectedField(totalController);
                           },
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(9)
-                          ],
+                          child: TextField(
+                            controller: totalController,
+                            decoration: const InputDecoration(
+                              labelText: 'Total',
+                              labelStyle: TextStyle(color: Colors.grey),
+                              prefixText: 'R\$ ',
+                              prefixStyle: TextStyle(color: Colors.grey),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                signed: false, decimal: true),
+                            onChanged: (text) {
+                              calculatePrice(ValidControll.total);
+                            },
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(9)
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -399,5 +414,9 @@ class _UpdateListProductPageState extends State<UpdateListProductPage> {
               return widgetReturn;
             },
           );
+  }
+
+  void selectedField(TextEditingController controller) {
+    controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.text.length);
   }
 }

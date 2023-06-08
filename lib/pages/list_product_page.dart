@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:shopping_list_new/models/product.dart';
 import 'package:shopping_list_new/models/shopping_list.dart';
 import 'package:shopping_list_new/models/list_product.dart';
@@ -187,12 +188,15 @@ class _ListProductPageState extends State<ListProductPage> {
                                     child: InkWell(
                                       onTap: () {
                                         Navigator.push(context,
-                                            MaterialPageRoute(builder: (context) {
-                                              return UpdateListProductPage(
+                                            PageTransition(
+                                              type: PageTransitionType.fade,
+                                              duration: const Duration(milliseconds: 400),
+                                              reverseDuration: const Duration(milliseconds: 400),
+                                              child: UpdateListProductPage(
                                                 listProduct: listProduct[index],
                                                 user: widget.user,
-                                              );
-                                            }),
+                                              ),
+                                            ),
                                         ).then((value) {
                                           if (value != null) {
                                             setState(() {
@@ -341,9 +345,9 @@ class _ListProductPageState extends State<ListProductPage> {
   }
 
   void addItem() {
-    String productText = productController.text;
+    String productTextAux = productController.text;
 
-    if (productText.isEmpty) {
+    if (productTextAux.isEmpty) {
       setState(() {
         errorTextProduct = 'Necessário informar um produto';
       });
@@ -370,7 +374,7 @@ class _ListProductPageState extends State<ListProductPage> {
 
                     productList = Product(
                       dtCreated: DateTime.now(),
-                      name: productText,
+                      name: productTextAux,
                       userId: widget.user.uid,
                     );
                     setState(() {
@@ -383,6 +387,7 @@ class _ListProductPageState extends State<ListProductPage> {
                       });
                       if (value != null) {
                         productList!.id = value;
+                        saveItem();
                       } else {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(snackBarError);
@@ -408,39 +413,43 @@ class _ListProductPageState extends State<ListProductPage> {
             );
           });
     } else {
-      SnackBar snackBarError = const SnackBar(
-        content: Text('Ocorreu um erro ao gravar o produto'),
-        duration: Duration(seconds: 2),
-      );
-
-      ListProduct listProductItem = ListProduct(
-        check: false,
-        listId: widget.shoppingList.id!,
-        product: productList!.name,
-        productId: productList!.id!,
-        quantity: 0,
-        totalPrice: 0,
-        unitPrice: 0,
-        userId: widget.user.uid,
-      );
-
-      setState(() {
-        loading = true;
-      });
-      createListProduct(listProductItem).then((value) {
-        setState(() {
-          loading = false;
-        });
-        if (value != null) {
-          productController.clear();
-          productList = null;
-          listProductItem.id = value;
-          listProduct.insert(0, listProductItem);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(snackBarError);
-        }
-      });
+      saveItem();
     }
+  }
+
+  void saveItem() {
+    SnackBar snackBarError = const SnackBar(
+      content: Text('Ocorreu um erro ao gravar o produto'),
+      duration: Duration(seconds: 2),
+    );
+
+    ListProduct listProductItem = ListProduct(
+      check: false,
+      listId: widget.shoppingList.id!,
+      product: productList!.name,
+      productId: productList!.id!,
+      quantity: 0,
+      totalPrice: 0,
+      unitPrice: 0,
+      userId: widget.user.uid,
+    );
+
+    setState(() {
+      loading = true;
+    });
+    createListProduct(listProductItem).then((value) {
+      setState(() {
+        loading = false;
+      });
+      if (value != null) {
+        productController.clear();
+        productList = null;
+        listProductItem.id = value;
+        listProduct.insert(0, listProductItem);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+      }
+    });
   }
 
   Widget searchProduct() {

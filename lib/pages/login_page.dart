@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:shopping_list_new/general/styles.dart';
+import 'package:shopping_list_new/pages/change_password_page.dart';
 import 'package:shopping_list_new/repository/firebase.dart';
 import 'package:shopping_list_new/pages/register_page.dart';
 
@@ -111,11 +114,37 @@ class _LoginPageState extends State<LoginPage> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return RegisterPage();
-                }));
+                Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      duration: const Duration(milliseconds: 400),
+                      reverseDuration: const Duration(milliseconds: 400),
+                      child: const ChangePasswordPage(),
+                    )
+                );
               },
-              child: Text(
+              child: const Text(
+                'Esqueci a senha',
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+            TextButton(
+              style: const ButtonStyle(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      duration: const Duration(milliseconds: 400),
+                      reverseDuration: const Duration(milliseconds: 400),
+                      child: const RegisterPage(),
+                    )
+                );
+              },
+              child: const Text(
                 'Registrar-se',
                 style: TextStyle(fontSize: 16),
               ),
@@ -148,7 +177,12 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {loading = true;});
     loginShoppingList(user, password).then((value) {
-      if (value['authenticated']) {
+      if (value['emailVerify']) {
+        setState(() {
+          loading = false;
+        });
+        sendEmailVerify(value['user']);
+      } else if (value['authenticated']) {
         setState(() {
           loading = false;
           userError = null;
@@ -169,5 +203,52 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     });
+  }
+
+  void sendEmailVerify(User user) {
+    AlertDialog alertConfirm = AlertDialog(
+      title: const Text('E-mail enviado'),
+      content: Text('Seu e-mail de confirmação foi enviado ao e-mail "${user.email}". '
+          'Realize a confirmação antes de efetuar o login.'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Ok'),
+        ),
+      ],
+    );
+
+    AlertDialog alertSendEmail = AlertDialog(
+      title: const Text('Verificação de e-mail'),
+      content: const Text('Sua conta possui pendência de confirmação de e-mail. '
+          'Deseja realizar a vericação agora?'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            user.sendEmailVerification().then((value) {
+              showDialog(context: context, builder: (context) => alertConfirm);
+            });
+          },
+          child: const Text(
+            'Sim',
+            style: TextStyle(color: yesButton),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text(
+            'Não',
+            style: TextStyle(color: noButton),
+          ),
+        ),
+      ],
+    );
+
+    showDialog(context: context, builder: (context) => alertSendEmail);
   }
 }

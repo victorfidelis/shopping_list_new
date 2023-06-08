@@ -34,21 +34,32 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Produtos'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Conta'),
         ],
-        backgroundColor: secondaryBackground,
+        type: BottomNavigationBarType.fixed,
+        iconSize: 24,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        backgroundColor: primaryElement,
+        unselectedFontSize: 10,
         currentIndex: selectedPage,
-        selectedItemColor: primaryBackground,
+        selectedItemColor: selectedIconBar,
         unselectedItemColor: inactivated,
         onTap: onTapItem,
       ),
-      body: PageView(
-        controller: pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          ListPage(user: widget.user!),
-          StorePage(user: widget.user!),
-          ProductPage(user: widget.user!),
-          AccountPage(user: widget.user, logout: logout,),
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: background,
+        ),
+        child: PageView(
+          controller: pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            ListPage(user: widget.user!),
+            StorePage(user: widget.user!),
+            ProductPage(user: widget.user!),
+            AccountPage(user: widget.user, logout: logout,),
+          ],
+        ),
       ),
     );
   }
@@ -92,5 +103,4 @@ class _HomePageState extends State<HomePage> {
       pageController.jumpToPage(item);
     });
   }
-
 }

@@ -13,6 +13,7 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmationController = TextEditingController();
+  GlobalKey scaffoldKey = GlobalKey();
 
   bool hidePassword = true;
   bool hideConfirmation = true;
@@ -26,6 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Column(
@@ -35,7 +37,7 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Container(
                 alignment: Alignment.center,
                 child: const Text(
-                  'Shopping List\n\nCadastro de Usuário',
+                  'Cadastro de Usuário',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -46,7 +48,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
             const SizedBox(
-              height: 30,
+              height: 12,
             ),
             TextField(
               controller: emailController,
@@ -187,12 +189,13 @@ class _RegisterPageState extends State<RegisterPage> {
         if (value['authenticated']) {
           AlertDialog alertDialog = AlertDialog(
             title: const Text('Parabéns!'),
-            content: const Text('Seu usuário foi cadastrado com sucesso'),
+            content: const Text('Seu usuário foi cadastrado com sucesso. '
+                'Verifique se recebeu seu e-mail de confirmação.'),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  Navigator.pop(context);
+                  Navigator.pop(context, scaffoldKey);
                 },
                 child: const Text('Ok'),
               )

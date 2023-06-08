@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:shopping_list_new/general/styles.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -37,6 +38,7 @@ class _ProductPageState extends State<ProductPage>
         loading = false;
         loadingError = false;
         listProduct = firebaseProducts.docs.map((e) => Product.fromDocument(e)).toList();
+        listProduct.sort((a, b) => a.name.toUpperCase().compareTo(b.name.toUpperCase()));
       });
     } catch (e) {
       setState(() {
@@ -55,11 +57,16 @@ class _ProductPageState extends State<ProductPage>
 
   @override
   Widget build(BuildContext context) {
-    print('productpage');
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Produtos'),
+        title: const Row(
+          children: [
+            Icon(Icons.shopping_bag, size: 30,),
+            SizedBox(width: 8),
+            Text('Produtos'),
+          ],
+        ),
         backgroundColor: primaryBackground,
         titleTextStyle: appBarTextStyle,
       ),
@@ -69,11 +76,14 @@ class _ProductPageState extends State<ProductPage>
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) {
-              return CreateProductPage(
+            PageTransition(
+              type: PageTransitionType.fade,
+              duration: const Duration(milliseconds: 400),
+              reverseDuration: const Duration(milliseconds: 400),
+              child: CreateProductPage(
                 user: widget.user,
-              );
-            }),
+              ),
+            ),
           ).then((value) {
             if (value != null) {
               setState(() {
@@ -89,75 +99,83 @@ class _ProductPageState extends State<ProductPage>
           size: 32,
         ),
       ),
-      body: loadingError
-          ? const Center(child: Text('Ocorreu um erro ao carregar as listas.'))
-          : loading
-              ? loadingAnimationPage
-              : RefreshIndicator(
-                onRefresh: refreshListProducts,
-                child: ListView.builder(
-                    itemCount: listProduct.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: secondaryBackground,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Slidable(
-                          startActionPane: ActionPane(
-                            extentRatio: 0.25,
-                            motion: const ScrollMotion(),
-                            children: [
-                              SlidableAction(
-                                onPressed: (context) {
-                                  delete(listProduct[index], index);
-                                },
-                                backgroundColor: Colors.red,
-                                icon: Icons.delete,
-                                label: 'Delete',
-                              ),
-                            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: background,
+        ),
+        child: loadingError
+            ? const Center(child: Text('Ocorreu um erro ao carregar as listas.'))
+            : loading
+                ? loadingAnimationPage
+                : RefreshIndicator(
+                  onRefresh: refreshListProducts,
+                  child: ListView.builder(
+                      itemCount: listProduct.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: secondaryBackground,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          child: ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) {
-                                  return CreateProductPage(
-                                    user: widget.user,
-                                    product: listProduct[index],
-                                  );
-                                }),
-                              ).then((value) {
-                                if (value != null) {
-                                  setState(() {
-                                    listProduct[index] = value;
-                                  });
-                                }
-                              });
-                            },
-                            title: Text(
-                              listProduct[index].name,
-                              style: const TextStyle(
-                                color: secondaryElement,
-                                fontSize: fontSizeCards,
-                                fontWeight: FontWeight.w600,
+                          child: Slidable(
+                            startActionPane: ActionPane(
+                              extentRatio: 0.25,
+                              motion: const ScrollMotion(),
+                              children: [
+                                SlidableAction(
+                                  onPressed: (context) {
+                                    delete(listProduct[index], index);
+                                  },
+                                  backgroundColor: Colors.red,
+                                  icon: Icons.delete,
+                                  label: 'Delete',
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  PageTransition(
+                                    type: PageTransitionType.fade,
+                                    duration: const Duration(milliseconds: 400),
+                                    reverseDuration: const Duration(milliseconds: 400),
+                                    child: CreateProductPage(
+                                      user: widget.user,
+                                      product: listProduct[index],
+                                    ),
+                                  ),
+                                ).then((value) {
+                                  if (value != null) {
+                                    setState(() {
+                                      listProduct[index] = value;
+                                    });
+                                  }
+                                });
+                              },
+                              title: Text(
+                                listProduct[index].name,
+                                style: const TextStyle(
+                                  color: secondaryElement,
+                                  fontSize: fontSizeCards,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                DateFormat('dd/MM/yyyy')
+                                    .format(listProduct[index].dtCreated),
+                                style: const TextStyle(
+                                  color: secondaryElement,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
-                            subtitle: Text(
-                              DateFormat('dd/MM/yyyy')
-                                  .format(listProduct[index].dtCreated),
-                              style: const TextStyle(
-                                color: secondaryElement,
-                                fontSize: 12,
-                              ),
-                            ),
                           ),
-                        ),
-                      );
-                    }),
-              ),
+                        );
+                      }),
+                ),
+      ),
     );
   }
 
