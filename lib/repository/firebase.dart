@@ -51,7 +51,8 @@ Future<Map> registerShoppingList(String emailAddress, String password) async {
   };
 
   try {
-    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+    UserCredential userCredential =
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: emailAddress,
       password: password,
     );
@@ -132,6 +133,16 @@ Future<bool> deleteStore(Store store) async {
   return returnStatus;
 }
 
+Future<bool> consultStoreInList(String storeId) async {
+  User currentUser = FirebaseAuth.instance.currentUser!;
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection('lists')
+      .where('user_id', isEqualTo: currentUser.uid)
+      .where('store_id', isEqualTo: storeId)
+      .get();
+  return querySnapshot.size > 0;
+}
+
 Future<String?> createProduct(Product product) async {
   try {
     DocumentReference productDocument = await FirebaseFirestore.instance
@@ -166,7 +177,7 @@ Future<bool> deleteProduct(Product product) async {
         .get();
 
     await FirebaseFirestore.instance.runTransaction(
-          (transaction) async {
+      (transaction) async {
         transaction.delete(productDocument.reference);
       },
     );
@@ -174,6 +185,16 @@ Future<bool> deleteProduct(Product product) async {
     returnStatus = false;
   }
   return returnStatus;
+}
+
+Future<bool> consultProductInList(String productId) async {
+  User currentUser = FirebaseAuth.instance.currentUser!;
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection('list_products')
+      .where('user_id', isEqualTo: currentUser.uid)
+      .where('product_id', isEqualTo: productId)
+      .get();
+  return querySnapshot.size > 0;
 }
 
 Future<String?> createList(ShoppingList list) async {
@@ -215,14 +236,14 @@ Future<bool> deleteList(ShoppingList shoppingList) async {
 
     listProducts.docs.forEach((element) async {
       await FirebaseFirestore.instance.runTransaction(
-            (transaction) async {
+        (transaction) async {
           transaction.delete(element.reference);
         },
       );
     });
 
     await FirebaseFirestore.instance.runTransaction(
-          (transaction) async {
+      (transaction) async {
         transaction.delete(listDocument.reference);
       },
     );
@@ -266,7 +287,7 @@ Future<bool> deleteListProduct(ListProduct listProduct) async {
         .get();
 
     await FirebaseFirestore.instance.runTransaction(
-          (transaction) async {
+      (transaction) async {
         transaction.delete(listProductDocument.reference);
       },
     );

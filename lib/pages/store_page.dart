@@ -217,20 +217,38 @@ class _StorePageState extends State<StorePage>
         },
       ),
     );
+    AlertDialog alertFail = AlertDialog(
+      title: const Text('Loja em lista'),
+      content: Text(
+          'A loja "${storeDelete.name}" não pode ser excluída pois consta em lista.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ok'),),
+      ],
+    );
+
     setState(() {
       loading = true;
     });
-
-    deleteStore(storeDelete).then((value) {
-      setState(() {
-        listStore.removeAt(index);
-        loading = false;
-      });
+    consultStoreInList(storeDelete.id!).then((value) {
       if (value) {
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+        setState(() {
+          loading = false;
+        });
+        showDialog(context: context, builder: (context) => alertFail);
+        return;
       }
+
+      deleteStore(storeDelete).then((value) {
+        setState(() {
+          listStore.removeAt(index);
+          loading = false;
+        });
+        if (value) {
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+        }
+      });
     });
   }
 
