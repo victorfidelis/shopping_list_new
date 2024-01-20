@@ -1,8 +1,6 @@
 # shopping_list_new
 
-Aplicativo mobile para auxíliar nas compras do dia-a-dia.
-
-É necessário realizar o cadastro no aplicativo para sua utilização.
+Aplicativo mobile para organizar as compras do dia-a-dia.
 
 O usuário pode cadastrar diversar listas de compras com diversos itens, onde cada lista deve possuir a respectiva loja referente as compras. Em cada item pode-se informar a quantidade, o preço unitário e o preço total do produto. 
 
