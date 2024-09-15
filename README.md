@@ -11,5 +11,4 @@ O app também possui um sistema de susgetão de lojas e produtos ao iniciar qual
 ## Tecnologias
 - Dart
 - Flutter
-- Bloc
-- SQlite
+- Firebase
